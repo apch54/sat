@@ -12,9 +12,9 @@
 #  My name's rmb stands for Rambo the 'socler'    !
 #-------------------------------------------------!
 
-class Phacker.Game.Socle #
+class Phacker.Game.Socle #    
 
-    # Platform ss   
+    # Platform ss
 
     constructor: (@gm, @init) ->
         @_fle_          = 'Socle'
