@@ -1,11 +1,5 @@
 
-#         ,-_-|
-#      | ([o o])| ------------- ##        o  o  O  O   O
-#      | --(_)--| ------------- ##
-#    /---------------\
-#   |   Rambo-tank    `
-#   |------------------|
-#   |__o__0__0__0__o__/     fc 2016-12-10
+#  fc 2016-12-10
 #
 
 #Register Game
@@ -19,9 +13,9 @@ game.setSpecificAssets ->
     @_fle_ = 'specific asset'
     dsk = root_design + "desktop/desktop_gameplay/"
     mob = root_design + "mobile/mobile_gameplay/"
-    aud = root_game   + 'audio/' #"products/tank-warrior/game/audio/"
+    aud = root_game   + 'audio/' #
 
-    ld= @game.load
+    ld= @game.load 
 
     #.----------.----------
     #images & sprites
@@ -35,27 +29,15 @@ game.setSpecificAssets ->
 
     #pointer
     ld.spritesheet  'pnt',   dsk + 'pointer2.png',17, 17, 3
+
     #balls
     ld.spritesheet  'balls', dsk + 'balls.png', 18, 18, 6
 
-    ### platform
+    # effect
+    ld.spritesheet 'effect',   dsk + 'effects/effect2.png', 86, 88, 3
 
+    ld.audio 'sat_audio',       [ aud + 'sat.mp3', aud + 'sat.ogg' ]
 
-    ld.spritesheet 'jmp_btn', dsk + 'jump_btn.png', 200, 57, 2
-    # that's rambo the tank-warrior (rmb)
-    ld.spritesheet 'rmb',     dsk + 'character_sprite/character_sprite.png', 35, 44, 4
-
-    ld.spritesheet 'tank1',   dsk + 'danger/danger1.png', 68, 42, 4
-    ld.spritesheet 'tank2',   dsk + 'danger/danger2.png', 68, 42, 4
-    ld.spritesheet 'tank3',   dsk + 'danger/danger3.png', 68, 42, 4
-
-    ld.spritesheet 'effect1',   dsk + 'effects/effect1.png', 86, 88, 3
-    ld.spritesheet 'effect2',   dsk + 'effects/effect2.png', 86, 88, 3
-    ld.spritesheet 'effect3',   dsk + 'effects/effect3.png', 86, 88, 3
-
-    ld.audio 'bs_audio',       [ aud + 'bs.mp3', aud + 'bs.ogg' ]
-
-    ###
     #.----------.----------
     #consts
     #.----------.----------
@@ -64,24 +46,28 @@ game.setSpecificAssets ->
         sky :
             x0 : 0
             y0 : 48 # bachground
-            w  : if gameOptions.fullscreen  then 768 else 375
-            h  : if gameOptions.fullscreen  then 768 - 48 else 375 - 48
+            w  : if gameOptions.fullscreen  then 375 else 768
+            h: if gameOptions.fullscreen  then 559 - 48 else 500 - 48
     #pointer
     @game.init.pnt =
         width       : 20
         height      : 20
-        x0          : 100
-        y0          : 100
+        x0          : 50
+        y0          : if gameOptions.fullscreen then (768 - 48) / 2 else (559 - 48)/2
         mouse_down  : false
 
-    #p ball
+    # balls
     @game.init.ball =
         height      :  18
         width       :  18
+        speed       : gameOptions.speed
+        dspeed      : 0.0005
+
+    @game.init.colors =  {green: 0, yellow:1, red:2, invisible:100 }
 
 
     #.----------.----------
-    # to be let    
+    # to be let
     #.----------.----------
 
     game.setTextColorGameOverState 'white'
@@ -101,4 +87,3 @@ game.setSpecificAssets ->
     game.game.paused = false
 
 game.run();
-

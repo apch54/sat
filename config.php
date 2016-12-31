@@ -7,21 +7,19 @@ define('PRODUCT', 'satellina');
 
 $gameOptions = array(
 	'duration' => 60,
-	'pointEarned' => 10,
-    'pointLost' => 5,
-	'pointToLevel1' => 200,
+	'pointEarned' => 5,
+    'pointLost' => 20,
+	'pointToLevel1' => 100,
     'winningLevel' =>2,
     'timingTemps'=> false,
     'percentToNextLevel' => 1.5,
-    'life' => 3,
+    'life' => 2,
     'pointBonus' => 5,
     //----------------------
     // special  parameters
-    //----------------------
-    // on stage tank velocity.x  (pxl/sec) 
-    // slow : 30,  fast : 60,  very fast: 100 px/sec, even more for a suicide play)
-    'tank_vx'  =>  30,    
-    'rambo_vx' =>  80,  // player velocity.x   (pxl/sec) 
+    //---------------------- 
+    // slow : 0.005,  fast : 0.04,  very fast: 0.07 
+    'speed'  =>  0.01, // balloon speed
     //----------------------
 
     'winCallback' => 'http://www.google.com',

@@ -48,10 +48,6 @@
       return this.init.pnt.mouse_down = false;
     };
 
-    Pointer.prototype.reset = function() {
-      return this.rmb.x = this.init.rmb.x0;
-    };
-
     return Pointer;
 
   })();
@@ -66,7 +62,6 @@
       this.param = param;
       this._fle_ = 'One ball';
       this.teta = 0;
-      this.dteta = .02;
       this.phase = .5;
       this.center = {
         x: this.gm.world.centerX,
@@ -76,7 +71,9 @@
         x: 150,
         y: 60
       };
-      this.color = 3;
+      this.colors = this.init.colors;
+      this.color = this.colors.green;
+      this.num = this.param.num;
       this.curve(this.param);
       this.ball = this.gm.add.sprite(this.fx(this.teta), this.fy(this.teta), 'balls', this.color);
       if (this.param.color === 'invisible') {
@@ -90,8 +87,6 @@
       }
       if (x.rad != null) {
         this.rad = x.rad;
-      } else {
-
       }
       if (x.phase != null) {
         this.phase = x.phase;
@@ -100,20 +95,7 @@
         this.center = x.center;
       }
       if (x.color != null) {
-        return this.color = this.set_color(x.color);
-      }
-    };
-
-    One_ball.prototype.set_color = function(x) {
-      switch (x) {
-        case 'red':
-          return 0;
-        case 'green':
-          return 3;
-        case 'yellow':
-          return 5;
-        default:
-          return 4;
+        return this.color = this.colors[x.color];
       }
     };
 
@@ -125,8 +107,8 @@
       return this.center.y + this.rad.y * Math.cos(tt);
     };
 
-    One_ball.prototype.move = function(dteta) {
-      this.teta += dteta;
+    One_ball.prototype.move = function(speed) {
+      this.teta += speed;
       if (this.teta > 2 * Math.PI) {
         this.teta -= 2 * Math.PI;
       }
@@ -141,36 +123,61 @@
 }).call(this);
 
 (function() {
+  var indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
   Phacker.Game.Shapes = (function() {
     function Shapes(gm, init) {
       this.gm = gm;
       this.init = init;
       this._fle_ = 'Shapes';
       this.balls = [];
+      this.speed = {
+        current: this.gm.init.ball.speed,
+        last: this.gm.init.ball.speed
+      };
       this.color = ['green', 'yellow', 'red', 'invisible'];
+      this.num = 0;
+      this.has_losted = false;
+      this.last_ball = 28;
+      this.i_invisible = [14, 28];
+      this.invisible = [];
+      this.green = [];
+      this.yellow = [];
+      this.red = [];
       this.make_ellipse(14, 1);
       this.make_ellipse(14, -1);
+
+      /*console.log "- #{@_fle_} : ",@green
+      console.log "- #{@_fle_} : ",@yellow
+      console.log "- #{@_fle_} : ",@red
+      console.log "- #{@_fle_} : ",@invisible
+       */
     }
 
     Shapes.prototype.make_a_ball = function(params) {
       var bl;
+      this.num++;
       bl = new Phacker.Game.One_ball(this.gm, this.init, params);
       return this.balls.push(bl);
     };
 
-    Shapes.prototype.move = function(speed) {
+    Shapes.prototype.move = function() {
       var bl, j, len, ref, results;
       ref = this.balls;
       results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         bl = ref[j];
-        results.push(bl.move(speed));
+        results.push(bl.move(this.speed.current));
       }
       return results;
     };
 
     Shapes.prototype.bind_pointer = function(pt) {
       return this.pointer = pt;
+    };
+
+    Shapes.prototype.bind_effect = function(eff) {
+      return this.effect = eff;
     };
 
     Shapes.prototype.make_ellipse = function(n_balls, phs) {
@@ -184,32 +191,85 @@
       };
       results = [];
       for (i = j = 0, ref = n_balls - 1; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
-        params.color = this.color[i % 3];
-        if (i >= n_balls - 1) {
-          params.color = 'invisible';
-        }
+        params.color = this.define_color(this.num);
         params.teta = Math.PI * 2 / n_balls * i;
+        params.num = this.num;
         results.push(ball = this.make_a_ball(params));
       }
       return results;
     };
 
     Shapes.prototype.overlap = function() {
-      var ball, bl_bnd, j, len, pt_bnd, ref, results;
+      var ball, bi, bj, br, j, len, ref;
       ref = this.balls;
-      results = [];
       for (j = 0, len = ref.length; j < len; j++) {
         ball = ref[j];
-        bl_bnd = ball.ball.getBounds();
-        pt_bnd = this.pointer.getBounds();
-        if (Phaser.Rectangle.intersects(bl_bnd, pt_bnd)) {
-          ball.ball.visible = false;
-          results.push(console.log("- " + this._fle_ + " : ", 'overlap'));
-        } else {
-          results.push(void 0);
+        if (Phaser.Rectangle.intersects(ball.ball.getBounds(), this.pointer.getBounds()) && ball.ball.visible) {
+          switch (ball.color) {
+            case 2:
+            case 1:
+              if (!this.has_losted) {
+                this.speed.last = this.speed.current;
+                this.speed.current = 0;
+                this.has_losted = true;
+                return 'loose';
+              }
+              break;
+            case 0:
+              this.speed.current += this.init.ball.dspeed;
+              ball.ball.visible = false;
+              this.invisible.push(ball.num);
+              this.green = this.green.filter(function(x) {
+                return x !== ball.num;
+              });
+              bi = this.balls[this.invisible.shift()];
+              bi.ball.visible = true;
+              bi.color = 2;
+              bi.ball.frame = 2;
+              this.red.push(bi.num);
+              br = this.balls[this.red.shift()];
+              this.yellow.push(br.num);
+              br.color = 1;
+              br.ball.frame = 1;
+              bj = this.balls[this.yellow.shift()];
+              this.green.push(bj.num);
+              bj.color = 0;
+              bj.ball.frame = 0;
+              return 'win';
+          }
         }
       }
-      return results;
+      return 'nothing';
+    };
+
+    Shapes.prototype.define_color = function(num) {
+      var col, ref;
+      col = num % 3;
+      if (ref = num + 1, indexOf.call(this.i_invisible, ref) >= 0) {
+        col = 3;
+        this.invisible.push(num);
+      } else {
+        switch (col) {
+          case 0:
+            this.green.push(num);
+            break;
+          case 1:
+            this.yellow.push(num);
+            break;
+          case 2:
+            this.red.push(num);
+        }
+      }
+      return this.color[col];
+    };
+
+    Shapes.prototype.set_color = function(bl, color) {
+      return bl.ball.frame = color;
+    };
+
+    Shapes.prototype.reset = function() {
+      this.has_losted = false;
+      return this.speed.current = this.speed.last;
     };
 
     return Shapes;
@@ -220,42 +280,31 @@
 
 (function() {
   Phacker.Game.Effects = (function() {
-    function Effects(gm, rmb, stp, init) {
-      this._fle_ = 'Boom';
+    function Effects(gm, pointer, init) {
       this.gm = gm;
-      this.rmb = rmb;
-      this.stp = stp;
+      this.pointer = pointer;
       this.init = init;
+      this._fle_ = 'Effect';
       this.top_stick = 0;
-      this.tk = {};
-      this.tk_vx = 0;
-      this.rmb_vx = 0;
-      this.effect_faces = ['effect1', 'effect2', 'effect3'];
-      this.boom = this.gm.add.sprite(100, 100, this.effect_faces[this.gm.rnd.integerInRange(0, 1)]);
+      this.boom = this.gm.add.sprite(100, 100, 'effect');
       this.boom.animations.add('explosion', [2, 1, 0], 10, true);
       this.boom.animations.add('implosion', [0, 1, 2], 10, true);
       this.boom.animations.play('explosion');
-      this.boom.visible = false;
+      this.boom.visible = true;
     }
 
-    Effects.prototype.explode = function() {
+    Effects.prototype.explode = function(x, y) {
       this.top_stick = new Date().getTime();
-      this.tk = this.stp.tanks.getAt(0);
-      this.tk_vx = this.tk.body.velocity;
-      this.rmb_vx = this.rmb.body.velocity;
-      this.tk.body.velocity = 0;
-      this.rmb.body.velocity = 0;
+      console.log("- " + this._fle_ + " : ", this.pointer.x, this.pointer.y);
       this.boom.visible = true;
-      this.boom.x = (this.rmb.x + this.tk.x) / 2 - this.init.tank.width;
-      return this.boom.y = this.rmb.y - 25;
+      this.boom.x = this.pointer.x - 38;
+      return this.boom.y = this.pointer.y - 38;
     };
 
     Effects.prototype.restart = function() {
       var dt;
       dt = new Date().getTime() - this.top_stick;
       if ((2000 < dt && dt < 5000)) {
-        this.tk.body.velocity = this.tk_vx;
-        this.rmb.body.velocity = this.rmb_vx;
         this.top_stick = 0;
         return this.boom.visible = false;
       }
@@ -280,25 +329,22 @@
 
     A_sound.prototype.add_markers = function() {
       var i, len, results, snds, x;
-      snds = ['dong', 'fsi', 'ding', 'wap_wap', 'twat'];
+      snds = ['win', 'loose', 'wosh', 'over'];
       results = [];
       for (i = 0, len = snds.length; i < len; i++) {
         x = snds[i];
         switch (x) {
-          case 'dong':
-            results.push(this.snd.addMarker(x, 0.05, 0.45));
+          case 'win':
+            results.push(this.snd.addMarker(x, 0.5, 0.057));
             break;
-          case 'fsi':
-            results.push(this.snd.addMarker(x, 0.54, 1.22));
+          case 'loose':
+            results.push(this.snd.addMarker(x, 1, 0.27));
             break;
-          case 'ding':
-            results.push(this.snd.addMarker(x, 1.84, 1.06));
+          case 'wosh':
+            results.push(this.snd.addMarker(x, 1.5, 0.3));
             break;
-          case 'wap_wap':
-            results.push(this.snd.addMarker(x, 3.03, 3.25));
-            break;
-          case 'twat':
-            results.push(this.snd.addMarker(x, 6.44, 0.17));
+          case 'over':
+            results.push(this.snd.addMarker(x, 2, 4.2));
             break;
           default:
             results.push(void 0);
@@ -329,10 +375,21 @@
     }
 
     YourGame.prototype.update = function() {
+      var resp;
       this._fle_ = ' Jeu Update : ';
       YourGame.__super__.update.call(this);
-      this.shapesO.move(0.025);
-      return this.shapesO.overlap();
+      this.shapesO.move();
+      console.log("- " + this._fle_ + " : ", this.effO.pointer.x);
+      resp = this.shapesO.overlap();
+      if (resp === 'win') {
+        this.win();
+        return this.cd.play('win');
+      } else if (resp === 'loose') {
+        this.effO.explode();
+        this.lostLife();
+        this.lost();
+        return this.cd.play('loose');
+      }
 
       /*
       @game.physics.arcade.collide @rmb, @stepsO.stages
@@ -377,13 +434,9 @@
     };
 
     YourGame.prototype.resetPlayer = function() {
-
-      /*
-      console.log "Reset the player "
-      @stepsO.replace_tank(0) # set tank level 0 after the middle
-      @rmbO.reset()
-      #@end_game.inited = false
-       */
+      console.log("Reset the player ");
+      this.shapesO.reset();
+      return this.effO.restart();
     };
 
     YourGame.prototype.create = function() {
@@ -393,7 +446,10 @@
       this.socleO = new Phacker.Game.Socle(this.game, this.game.init);
       this.pointerO = new Phacker.Game.Pointer(this.game, this.game.init);
       this.shapesO = new Phacker.Game.Shapes(this.game, this.game.init);
-      return this.shapesO.bind_pointer(this.pointerO.pnt);
+      this.shapesO.bind_pointer(this.pointerO.pnt);
+      this.cd = new Phacker.Game.A_sound(this.game, 'sat_audio');
+      this.cd.play('win');
+      return this.effO = new Phacker.Game.Effects(this.game, this.pointerO.pnt, this.game.init);
 
       /*
       #.----------.----------
@@ -406,15 +462,6 @@
       @rmb = @rmbO.set() #define 'player' : Rambo
       @rmbO.bind(@stepsO)
       @socleO.bind(@rmb, @stepsO)
-      
-      #.----------.----------
-       * effect :  boom effect  in place  of rambo when he's overlaping a tank
-      @effO = new Phacker.Game.Effects @game, @rmb, @stepsO, @game.init # instance obj
-      
-      #.----------.----------
-       * audio
-      @cd = new Phacker.Game.A_sound @game, 'bs_audio'
-      #@cd.play 'over'
       
       #.----------.----------
       @rmbO.reset()
@@ -450,42 +497,34 @@
     }
     ld.spritesheet('pnt', dsk + 'pointer2.png', 17, 17, 3);
     ld.spritesheet('balls', dsk + 'balls.png', 18, 18, 6);
-
-    /* platform
-    
-    
-    ld.spritesheet 'jmp_btn', dsk + 'jump_btn.png', 200, 57, 2
-     * that's rambo the tank-warrior (rmb)
-    ld.spritesheet 'rmb',     dsk + 'character_sprite/character_sprite.png', 35, 44, 4
-    
-    ld.spritesheet 'tank1',   dsk + 'danger/danger1.png', 68, 42, 4
-    ld.spritesheet 'tank2',   dsk + 'danger/danger2.png', 68, 42, 4
-    ld.spritesheet 'tank3',   dsk + 'danger/danger3.png', 68, 42, 4
-    
-    ld.spritesheet 'effect1',   dsk + 'effects/effect1.png', 86, 88, 3
-    ld.spritesheet 'effect2',   dsk + 'effects/effect2.png', 86, 88, 3
-    ld.spritesheet 'effect3',   dsk + 'effects/effect3.png', 86, 88, 3
-    
-    ld.audio 'bs_audio',       [ aud + 'bs.mp3', aud + 'bs.ogg' ]
-     */
+    ld.spritesheet('effect', dsk + 'effects/effect2.png', 86, 88, 3);
+    ld.audio('sat_audio', [aud + 'sat.mp3', aud + 'sat.ogg']);
     this.game.init = {
       sky: {
         x0: 0,
         y0: 48,
-        w: gameOptions.fullscreen ? 768 : 375,
-        h: gameOptions.fullscreen ? 768 - 48 : 375 - 48
+        w: gameOptions.fullscreen ? 375 : 768,
+        h: gameOptions.fullscreen ? 559 - 48 : 500 - 48
       }
     };
     this.game.init.pnt = {
       width: 20,
       height: 20,
-      x0: 100,
-      y0: 100,
+      x0: 50,
+      y0: gameOptions.fullscreen ? (768 - 48) / 2 : (559 - 48) / 2,
       mouse_down: false
     };
     this.game.init.ball = {
       height: 18,
-      width: 18
+      width: 18,
+      speed: gameOptions.speed,
+      dspeed: 0.0005
+    };
+    this.game.init.colors = {
+      green: 0,
+      yellow: 1,
+      red: 2,
+      invisible: 100
     };
     game.setTextColorGameOverState('white');
     game.setTextColorWinState('white');

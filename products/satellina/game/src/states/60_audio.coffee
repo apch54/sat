@@ -21,16 +21,14 @@ class  Phacker.Game.A_sound    #extends Phacker.Game.sound
 
 
     add_markers: ()->
-        snds = ['dong','fsi','ding','wap_wap', 'twat'] # list the whole sound in bs file
+        snds = ['win','loose','wosh','over' ] # list the whole sound in bs file
 
         for x in snds
             #console.log "In sound add cls", x
             switch x
-                when 'dong'     then @snd.addMarker x,     0.05,  0.45   #  walk on steps
-                when 'fsi'      then @snd.addMarker x,      0.54,  1.22   #   fall down
-                when 'ding'     then @snd.addMarker x,     1.84,  1.06   # bonus o2
-                when 'wap_wap'  then @snd.addMarker x,     3.03,  3.25   # the end
-                when 'twat'     then @snd.addMarker x,     6.44,  0.17   # the end
+                when 'win'     then @snd.addMarker x,       0.5,  0.057   #  walk on steps
+                when 'loose'   then @snd.addMarker x,       1,    0.27    #   fall down
+                when 'wosh'    then @snd.addMarker x,       1.5,  0.3     # bonus o2
+                when 'over'    then @snd.addMarker x,       2,    4.2     # the end
 
     play: (key) -> @snd.play  key
-

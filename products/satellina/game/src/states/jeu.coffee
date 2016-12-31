@@ -17,8 +17,22 @@ class @YourGame extends Phacker.GameState
         @_fle_ =' Jeu Update : '
         super() #Required
 
-        @shapesO.move(0.025)
-        @shapesO.overlap()
+        @shapesO.move() # move balls
+        console.log "- #{@_fle_} : ",@effO.pointer.x
+
+        resp = @shapesO.overlap()
+
+        if resp is 'win'
+            @win()
+            @cd.play 'win'
+
+        else if resp is 'loose'
+            @effO.explode() # effects
+            @lostLife()
+            @lost()
+            @cd.play 'loose'
+
+
 
         ###
         @game.physics.arcade.collide @rmb, @stepsO.stages
@@ -63,13 +77,10 @@ class @YourGame extends Phacker.GameState
     #----------.----------.----------
     resetPlayer: -> #when rmb has crashed or retry (error in that case)
     #----------.----------.----------
-        ###
         console.log "Reset the player "
-        @stepsO.replace_tank(0) # set tank level 0 after the middle
-        @rmbO.reset()
-        #@end_game.inited = false
+        @shapesO.reset()
+        @effO.restart()
 
-        ###
 
 
     #----------.----------.----------
@@ -93,10 +104,18 @@ class @YourGame extends Phacker.GameState
         @pointerO = new Phacker.Game.Pointer @game, @game.init
 
         #.----------.----------
-        #one ball
-
+        # set shapes & curves
         @shapesO = new Phacker.Game.Shapes @game, @game.init
-        @shapesO.bind_pointer(@pointerO.pnt)
+        @shapesO.bind_pointer(@pointerO.pnt) # bind player
+
+        #.----------.----------
+        # audio
+        @cd = new Phacker.Game.A_sound @game, 'sat_audio'
+        @cd.play 'win'
+
+        #.----------.----------
+        # effect :  boom effect  in place
+        @effO = new Phacker.Game.Effects @game,@pointerO.pnt, @game.init # instance obj
 
         ###
         #.----------.----------
@@ -111,18 +130,8 @@ class @YourGame extends Phacker.GameState
         @socleO.bind(@rmb, @stepsO)
 
         #.----------.----------
-        # effect :  boom effect  in place  of rambo when he's overlaping a tank
-        @effO = new Phacker.Game.Effects @game, @rmb, @stepsO, @game.init # instance obj
-
-        #.----------.----------
-        # audio
-        @cd = new Phacker.Game.A_sound @game, 'bs_audio'
-        #@cd.play 'over'
-
-        #.----------.----------
         @rmbO.reset()
         #@win()# score first
         @cd.play 'dong'
 
         ###
-        

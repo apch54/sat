@@ -1,6 +1,4 @@
 
-#
-#
 # by fc on 2016-12-28
 # pnt stands for pointer
 
@@ -27,13 +25,6 @@ class Phacker.Game.Pointer
 
     mouse_up:->  @init.pnt.mouse_down = false
 
-
-    #.----------.----------
-    # reset player  when lost life
-    #.----------.----------
-    reset: ->
-        #console.log "- #{@_fle_} : ", @rmb.x
-        @rmb.x = @init.rmb.x0
 
 
 
