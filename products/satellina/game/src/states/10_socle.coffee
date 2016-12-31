@@ -14,7 +14,7 @@
 
 class Phacker.Game.Socle #
 
-    # Platform ss
+    # Platform ss   
 
     constructor: (@gm, @init) ->
         @_fle_          = 'Socle'
